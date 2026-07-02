@@ -57,6 +57,13 @@ def generate_launch_description():
         ],
     )
 
+    sync_node = Node(
+        package='mms101_driver',
+        executable='sensor_synchronizer',
+        name='sensor_synchronizer',
+        output='screen',
+    )
+
     return LaunchDescription([
         port1_arg,
         port2_arg,
@@ -68,4 +75,5 @@ def generate_launch_description():
         DeclareLaunchArgument('topic2', default_value='/force_torque/right', description='Output topic for sensor 2'),
         node1,
         node2,
+        sync_node
     ])
