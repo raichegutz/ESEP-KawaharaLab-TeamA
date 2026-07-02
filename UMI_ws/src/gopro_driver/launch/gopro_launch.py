@@ -31,6 +31,11 @@ def generate_launch_description():
             default_value='gopro_frame',
             description='Frame id written into image headers.',
         ),
+        DeclareLaunchArgument(
+            'pixel_format',
+            default_value='MJPG',
+            description='Requested V4L2 pixel format, for example MJPG or YUYV.',
+        ),
         Node(
             package='gopro_driver',
             executable='gopro_node',
@@ -42,6 +47,7 @@ def generate_launch_description():
                 'height': LaunchConfiguration('height'),
                 'fps': LaunchConfiguration('fps'),
                 'frame_id': LaunchConfiguration('frame_id'),
+                'pixel_format': LaunchConfiguration('pixel_format'),
             }],
         ),
     ])
