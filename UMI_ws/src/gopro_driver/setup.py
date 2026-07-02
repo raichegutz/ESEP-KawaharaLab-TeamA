@@ -1,9 +1,10 @@
-import os
 from glob import glob
+import os
 
 from setuptools import find_packages, setup
 
-package_name = 'sensor_framework'
+
+package_name = 'gopro_driver'
 
 setup(
     name=package_name,
@@ -17,9 +18,9 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='raich',
-    maintainer_email='raich@todo.todo',
-    description='TODO: Package description',
+    maintainer='umi_team',
+    maintainer_email='todo@example.com',
+    description='GoPro HDMI capture driver for the UMI sensor framework.',
     license='TODO: License declaration',
     extras_require={
         'test': [
@@ -28,8 +29,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'sensor_recorder = sensor_framework.synchronizer_node:main',
-            'display_recording = sensor_framework.display_recording:main',
+            'gopro_node = gopro_driver.gopro_node:main',
         ],
     },
 )

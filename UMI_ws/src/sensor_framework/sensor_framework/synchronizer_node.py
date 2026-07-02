@@ -7,7 +7,11 @@ from std_msgs.msg import Float32MultiArray
 
 from .sensor_buffer import SensorDataBuffer
 from .writer import JsonlWriter
-from .converters import image_msg_to_record, array_msg_to_record
+from .converters import (
+    array_msg_to_record,
+    image_msg_to_metadata,
+    image_msg_to_record,
+)
 
 
 class ThreeTopicRecorder(Node):
@@ -15,14 +19,14 @@ class ThreeTopicRecorder(Node):
         super().__init__("three_topic_recorder")
 
         self.buffer = SensorDataBuffer()
-        self.writer = JsonlWriter("data/recording.jsonl")
+        self.writer = JsonlWriter("./data/recording.jsonl")
 
-        self.sub_image_left = self.create_subscription(
-            Image,
-            "/gelsight/left/image_raw",
-            lambda msg: self.image_callback(msg, "gelsight_left"),
-            10
-        )
+        # self.sub_image_left = self.create_subscription(
+        #     Image,
+        #     "/gelsight/left/image_raw",
+        #     lambda msg: self.image_callback(msg, "gelsight_left"),
+        #     10
+        # )
 
         self.sub_image_right = self.create_subscription(
             Image,
@@ -42,6 +46,7 @@ class ThreeTopicRecorder(Node):
         self.flush_timer = self.create_timer(1.5, self.flush)
 
     def image_callback(self, msg, topic_name: str):
+        self.writer.write_metadata(image_msg_to_metadata(msg))
         record = image_msg_to_record(msg)
         self.buffer.append(topic_name, record)
 
@@ -52,6 +57,14 @@ class ThreeTopicRecorder(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = ThreeTopicRecorder()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        try:
+            node.flush()
+        finally:
+            node.destroy_node()
+            if rclpy.ok():
+                rclpy.shutdown()
