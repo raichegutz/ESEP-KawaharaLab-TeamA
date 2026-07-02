@@ -37,8 +37,10 @@ def read_image_record(path: Path, image_index: int) -> dict:
             next_index = current_index + len(batch)
             if image_index < next_index:
                 record = batch[image_index - current_index]
-                if not isinstance(record, dict) or 'data' not in record:
+                if not isinstance(record, dict) or not ({'data', 'image'} & record.keys()):
                     raise ValueError(f'image {image_index} is not a valid image record')
+                if 'image' in record:
+                    record['_image_path'] = path.parent / record['image']
                 metadata_path = path.with_name('metadata.json')
                 if metadata_path.exists():
                     with metadata_path.open(encoding='utf-8') as metadata_file:
@@ -58,6 +60,7 @@ class RecordingReader:
     def __init__(self, path: Path, image_index: int = 0):
         if image_index < 0:
             raise ValueError('image index must be non-negative')
+        self._file_path = path
         self._file = path.open(encoding='utf-8')
         metadata_path = path.with_name('metadata.json')
         if metadata_path.exists():
@@ -75,7 +78,10 @@ class RecordingReader:
 
     @property
     def current(self) -> dict:
-        return {**self._metadata, **self._batch[self._record_index]}
+        record = {**self._metadata, **self._batch[self._record_index]}
+        if 'image' in record:
+            record['_image_path'] = self._file_path.parent / record['image']
+        return record
 
     def _read_batch(self, offset):
         self._file.seek(offset)
@@ -148,6 +154,12 @@ class RecordingReader:
 
 
 def decode_image(record: dict) -> np.ndarray:
+    if '_image_path' in record:
+        image = cv2.imread(str(record['_image_path']), cv2.IMREAD_UNCHANGED)
+        if image is None:
+            raise ValueError(f"failed to read PNG image: {record['_image_path']}")
+        return image
+
     encoding = record['encoding'].lower()
     if encoding not in ENCODINGS:
         raise ValueError(f'unsupported ROS image encoding: {encoding}')
@@ -190,7 +202,7 @@ def decode_image(record: dict) -> np.ndarray:
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='Display a raw image stored in a sensor_framework JSONL recording.'
+        description='Display images from a sensor_framework recording.'
     )
     parser.add_argument(
         'recording',

@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 # ROS 2 build artifacts
 **/build/
 **/install/
@@ -9,13 +8,5 @@
 Thumbs.db
 
 .vscode
-=======
-# ROS 2 build artifacts
-**/build/
-**/install/
-**/log/
 
-# OS-specific files
-.DS_Store
-Thumbs.db
->>>>>>> Stashed changes
+UMI_ws/src/sensor_framework/data/*
