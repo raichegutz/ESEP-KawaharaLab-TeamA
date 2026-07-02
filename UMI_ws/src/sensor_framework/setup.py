@@ -29,6 +29,7 @@ setup(
     entry_points={
         'console_scripts': [
             'sensor_recorder = sensor_framework.recorder_node:main',
+            'display_recording = sensor_framework.display_recording:main',
         ],
     },
 )
