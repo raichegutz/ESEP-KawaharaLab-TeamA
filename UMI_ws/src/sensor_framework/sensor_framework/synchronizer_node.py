@@ -19,14 +19,14 @@ class ThreeTopicRecorder(Node):
 
         self.sub_image_left = self.create_subscription(
             Image,
-            "/gelsight_left/image",
+            "/gelsight/left/image_raw",
             lambda msg: self.image_callback(msg, "gelsight_left"),
             10
         )
 
         self.sub_image_right = self.create_subscription(
             Image,
-            "/gelsight_right/image",
+            "/gelsight/right/image_raw",
             lambda msg: self.image_callback(msg, "gelsight_right"),
             10
         )
@@ -46,8 +46,7 @@ class ThreeTopicRecorder(Node):
         self.buffer.append(topic_name, record)
 
     def flush(self):
-        records = self.buffer.pop_all()
-        self.writer.write(records)
+        self.buffer.pop_all(self.writer)
 
 
 def main(args=None):

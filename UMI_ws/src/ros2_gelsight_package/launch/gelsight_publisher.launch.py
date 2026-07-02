@@ -18,7 +18,7 @@ def generate_launch_description():
         DeclareLaunchArgument('topic_1', default_value='gelsight/left/image_raw', description='Topic for camera 1 images'),
         DeclareLaunchArgument('frame_1', default_value='gelsight1', description='Frame id for camera 1'),
 
-        DeclareLaunchArgument('device_path_2', default_value='/dev/v4l/by-id/usb-Arducam_Technology_Co.__Ltd._GelSight_Mini_R0B_2BML-JPDL_2BMLJPDL-video-index0', description='Device path for camera 2 (/dev/v4l/by-id/...)'),
+        DeclareLaunchArgument('device_path_2', default_value='/dev/v4l/by-id/usb-Arducam_Technology_Co.__Ltd._GelSight_Mini_R0B_2DXY-BN94_2DXYBN94-video-index0', description='Device path for camera 2 (/dev/v4l/by-id/...)'),
         DeclareLaunchArgument('device_index_2', default_value='1', description='Device index for camera 2 (fallback if path empty)'),
         DeclareLaunchArgument('topic_2', default_value='gelsight/right/image_raw', description='Topic for camera 2 images'),
         DeclareLaunchArgument('frame_2', default_value='gelsight2', description='Frame id for camera 2'),

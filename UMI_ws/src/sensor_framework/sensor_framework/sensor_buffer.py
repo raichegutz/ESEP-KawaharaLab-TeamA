@@ -11,9 +11,8 @@ class SensorDataBuffer:
         with self._lock:
             self._data[topic_name].append(data)
 
-    def pop_all(self):
+    def pop_all(self, writer):
         with self._lock:
             records = self._data
+            writer.write(records)
             self._data.clear()
-
-        return records
