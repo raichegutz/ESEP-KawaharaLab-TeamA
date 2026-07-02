@@ -15,47 +15,39 @@ class ThreeTopicRecorder(Node):
         super().__init__("three_topic_recorder")
 
         self.buffer = SensorDataBuffer()
-        self.writer = JsonlWriter("recording.jsonl")
+        self.writer = JsonlWriter("data/recording.jsonl")
 
         self.sub_image_left = self.create_subscription(
             Image,
             "/gelsight_left/image",
-            self.left_image_callback,
-            10,
+            lambda msg: self.image_callback(msg, "gelsight_left"),
+            10
         )
 
         self.sub_image_right = self.create_subscription(
             Image,
             "/gelsight_right/image",
-            self.right_image_callback,
-            10,
+            lambda msg: self.image_callback(msg, "gelsight_right"),
+            10
         )
 
-        self.sub_force = self.create_subscription(
-            Float32MultiArray,
-            "/force_sensor",
-            self.force_callback,
-            10,
-        )
+        # self.sub_force = self.create_subscription(
+        #     Float32MultiArray,
+        #     "/force_sensor",
+        #     self.force_callback,
+        #     10,
+        # )
 
         # Flush data periodically instead of writing inside every callback.
-        self.flush_timer = self.create_timer(1.0, self.flush)
+        self.flush_timer = self.create_timer(1.5, self.flush)
 
-    def left_image_callback(self, msg):
+    def image_callback(self, msg, topic_name: str):
         record = image_msg_to_record(msg)
-        self.buffer.append("gelsight_left", record)
-
-    def right_image_callback(self, msg):
-        record = image_msg_to_record(msg)
-        self.buffer.append("gelsight_right", record)
-
-    def force_callback(self, msg):
-        record = array_msg_to_record(msg, timestamp_ns=self.get_clock().now().nanoseconds)
-        self.buffer.append("force", record)
+        self.buffer.append(topic_name, record)
 
     def flush(self):
         records = self.buffer.pop_all()
-        self.writer.write_many(records)
+        self.writer.write(records)
 
 
 def main(args=None):

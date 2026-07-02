@@ -4,7 +4,7 @@ class JsonlWriter:
     def __init__(self, path):
         self.path = path
 
-    def write_many(self, records):
+    def write(self, records):
         if not records:
             return
 

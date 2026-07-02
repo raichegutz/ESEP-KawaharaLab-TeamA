@@ -4,18 +4,19 @@ def stamp_to_ns(stamp):
 
 def image_msg_to_record(msg):
     return {
-        "timestamp_ns": stamp_to_ns(msg.header.stamp),
+        "timestamp": stamp_to_ns(msg.header.stamp),
         "height": msg.height,
         "width": msg.width,
         "encoding": msg.encoding,
-        # For real image recording, avoid dumping raw bytes to JSON.
-        # Use HDF5, NPZ, image files, or rosbag instead.
+        "is_bigendian": msg.is_bigendian,
+        "step": msg.step,
         "data_size": len(msg.data),
+        "data": list(msg.data),
     }
 
 
 def array_msg_to_record(msg, timestamp_ns):
     return {
-        "timestamp_ns": timestamp_ns,
+        "timestamp": timestamp_ns,
         "values": list(msg.data),
     }
