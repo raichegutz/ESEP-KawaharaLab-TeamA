@@ -10,12 +10,19 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(message_filters REQUIRED)
+
 
 add_executable(mms101_node src/mms101_node.cpp)
 ament_target_dependencies(mms101_node rclcpp geometry_msgs std_msgs)
 
+add_executable(sensor_synchronizer src/sensor_synchronizer.cpp)
+ament_target_dependencies(sensor_synchronizer rclcpp geometry_msgs message_filters)
+
+
 install(TARGETS
   mms101_node
+  sensor_synchronizer
   DESTINATION lib/${PROJECT_NAME})
 
 # Install launch files
