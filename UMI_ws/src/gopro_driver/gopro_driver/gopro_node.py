@@ -14,17 +14,23 @@ class GoProNode(Node):
         self.declare_parameter('width', 1280)
         self.declare_parameter('height', 720)
         self.declare_parameter('fps', 30.0)
+        self.declare_parameter('pixel_format', 'MJPG')
 
         self.video_device = self.get_parameter('video_device').value
         self.frame_id = self.get_parameter('frame_id').value
         self.width = int(self.get_parameter('width').value)
         self.height = int(self.get_parameter('height').value)
         self.fps = float(self.get_parameter('fps').value)
+        self.pixel_format = self.get_parameter('pixel_format').value
 
         self.bridge = CvBridge()
         self.publisher = self.create_publisher(Image, '/gopro/image_raw', 10)
 
         self.cap = cv2.VideoCapture(self.video_device, cv2.CAP_V4L2)
+        if self.pixel_format:
+            fourcc = cv2.VideoWriter_fourcc(*self.pixel_format[:4])
+            self.cap.set(cv2.CAP_PROP_FOURCC, fourcc)
+        self.cap.set(cv2.CAP_PROP_CONVERT_RGB, 1)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
         self.cap.set(cv2.CAP_PROP_FPS, self.fps)
@@ -38,9 +44,17 @@ class GoProNode(Node):
 
         timer_period = 1.0 / self.fps
         self.timer = self.create_timer(timer_period, self.publish_frame)
+        actual_width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        actual_height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        actual_fps = self.cap.get(cv2.CAP_PROP_FPS)
+        actual_fourcc = int(self.cap.get(cv2.CAP_PROP_FOURCC))
+        actual_fourcc_str = ''.join(
+            chr((actual_fourcc >> 8 * i) & 0xFF) for i in range(4)
+        )
         self.get_logger().info(
             f'GoPro node started on {self.video_device}: '
-            f'{self.width}x{self.height}@{self.fps}'
+            f'requested {self.width}x{self.height}@{self.fps} {self.pixel_format}; '
+            f'actual {actual_width}x{actual_height}@{actual_fps:.2f} {actual_fourcc_str}'
         )
 
     def publish_frame(self):
