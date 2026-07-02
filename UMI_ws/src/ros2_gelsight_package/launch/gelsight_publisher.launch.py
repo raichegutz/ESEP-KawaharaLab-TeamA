@@ -13,7 +13,7 @@ def generate_launch_description():
 
     args = [
         DeclareLaunchArgument('gs_config', default_value=default_config, description='Path to GelSight config JSON'),
-        DeclareLaunchArgument('device_path_1', default_value='/dev/v4l/by-id/usb-Arducam_Technology_Co.__Ltd._GelSight_Mini_R0B_2BJB-TRZT_2BJBTRZT-video-index0', description='Device path for camera 1 (/dev/v4l/by-id/...)'),
+        DeclareLaunchArgument('device_path_1', default_value='/dev/v4l/by-id/usb-Arducam_Technology_Co.__Ltd._GelSight_Mini_R0B_2DXX-N4A9_2DXXN4A9-video-index0', description='Device path for camera 1 (/dev/v4l/by-id/...)'),
         DeclareLaunchArgument('device_index_1', default_value='0', description='Device index for camera 1 (fallback if path empty)'),
         DeclareLaunchArgument('topic_1', default_value='gelsight/left/image_raw', description='Topic for camera 1 images'),
         DeclareLaunchArgument('frame_1', default_value='gelsight1', description='Frame id for camera 1'),
