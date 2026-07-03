@@ -141,12 +141,22 @@ class ForceSensorWriter(Writer):
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._file = self.path.open("a", encoding="utf-8")
 
-    def write(self, records: list) -> None:
+    def _get_file(self, sensor_name: str):
+        if sensor_name not in self._files:
+            file_path = self.path.with_name(f"{self.path.stem}_{sensor_name}.jsonl")
+            self._files[sensor_name] = file_path.open("a", encoding="utf-8")
+        return self._files[sensor_name]
+
+    def write(self, records: dict[str, list]) -> None:
         if not records:
             return
-        for record in records:
-            self._validate(record)
-            self._file.write(json.dumps(record) + "\n")
+
+        for sensor_name, sensor_value in records.items():
+            f = self._get_file(sensor_name)
+
+            for record in sensor_value:
+                self._validate(record)
+                f.write(json.dumps(record) + "\n")
 
     def _validate(self, record: dict):
         required_keys = ["stamp", "fx", "fy", "fz", "tx", "ty", "tz"]
