@@ -137,7 +137,19 @@ class GelsightWriter(Writer):
 
 class ForceSensorWriter(Writer):
     def __init__(self, path: str):
-        pass
+        self.path = Path(path)
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self._file = self.path.open("a", encoding="utf-8")
 
     def write(self, records: list) -> None:
-        pass
+        if not records:
+            return
+        for record in records:
+            self._validate(record)
+            self._file.write(json.dumps(record) + "\n")
+
+    def _validate(self, record: dict):
+        required_keys = ["stamp", "fx", "fy", "fz", "tx", "ty", "tz"]
+        for k in required_keys:
+            if k not in record:
+                raise ValueError(f"Missing key in force record: {k}")
