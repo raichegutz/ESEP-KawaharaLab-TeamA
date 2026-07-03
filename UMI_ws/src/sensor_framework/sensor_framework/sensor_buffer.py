@@ -1,4 +1,5 @@
 from collections import defaultdict
+from csv import writer
 from threading import Lock
 
 
@@ -12,7 +13,11 @@ class SensorDataBuffer:
             self._data[topic_name].append(data)
 
     def pop_all(self, writer) -> None:
+        #with self._lock:
+        #    records = self._data
+        #    writer.write(records)
+        #    self._data.clear()
         with self._lock:
-            records = self._data
-            writer.write(records)
+            records = dict(self._data)   # snapshot copy
             self._data.clear()
+        writer.write(records)
