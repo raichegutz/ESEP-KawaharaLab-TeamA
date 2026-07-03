@@ -22,7 +22,7 @@ class Writer(ABC):
 
 
 class GelsightWriter(Writer):
-    def __init__(self, data_path):
+    def __init__(self, data_path : Path):
         self.data_path = Path(data_path)
         self.data_path.mkdir(parents=True, exist_ok=True)
         self.metadata_path = self.data_path / 'metadata.json'
@@ -136,30 +136,34 @@ class GelsightWriter(Writer):
                     self._next_image_indices[safe_name] += 1
 
 class ForceSensorWriter(Writer):
-    def __init__(self, path: str):
-        self.path = Path(path)
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        self._file = self.path.open("a", encoding="utf-8")
-
-    def _get_file(self, sensor_name: str):
-        if sensor_name not in self._files:
-            file_path = self.path.with_name(f"{self.path.stem}_{sensor_name}.jsonl")
-            self._files[sensor_name] = file_path.open("a", encoding="utf-8")
-        return self._files[sensor_name]
+    def __init__(self, data_path: Path):
+        self.data_path = Path(data_path)
+        self.data_path.mkdir(parents=True, exist_ok=True)
 
     def write(self, records: dict[str, list]) -> None:
         if not records:
             return
 
-        for sensor_name, sensor_value in records.items():
-            f = self._get_file(sensor_name)
+        for sensor_name, sensor_records in records.items():
+            safe_name = self._safe_sensor_name(sensor_name)
+            sensor_path = self.data_path / f'recording_force_{safe_name}.jsonl'
+            with sensor_path.open('a', encoding='utf-8') as recording:
+                for record in sensor_records:
+                    self._validate(record)
+                    recording.write(json.dumps(record) + '\n')
 
-            for record in sensor_value:
-                self._validate(record)
-                f.write(json.dumps(record) + "\n")
+    @staticmethod
+    def _safe_sensor_name(sensor_name):
+        safe_name = ''.join(
+            character if character.isalnum() or character in '-_' else '_'
+            for character in sensor_name
+        ).strip('_')
+        if not safe_name:
+            raise ValueError(f'invalid force sensor name: {sensor_name!r}')
+        return safe_name
 
     def _validate(self, record: dict):
-        required_keys = ["stamp", "fx", "fy", "fz", "tx", "ty", "tz"]
-        for k in required_keys:
-            if k not in record:
-                raise ValueError(f"Missing key in force record: {k}")
+        required_keys = ['stamp', 'fx', 'fy', 'fz', 'tx', 'ty', 'tz']
+        for key in required_keys:
+            if key not in record:
+                raise ValueError(f'missing key in force record: {key}')

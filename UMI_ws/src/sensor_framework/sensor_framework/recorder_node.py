@@ -25,7 +25,7 @@ class ThreeTopicRecorder(Node):
 
         data_path = Path("./data").resolve()
         self.gelsight_writer = GelsightWriter(data_path)
-        self.force_writer = ForceSensorWriter(data_path / "recording_force.jsonl")
+        self.force_writer = ForceSensorWriter(data_path)
         self.get_logger().info(f"Recording sensor data in {data_path}")
 
         self.sub_image_left = self.create_subscription(
