@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from abc import ABC, abstractmethod
 
 import cv2
 import numpy as np
@@ -14,8 +15,13 @@ ENCODINGS = {
     'bgra8': (np.uint8, 4),
 }
 
+class Writer(ABC):
+    @abstractmethod
+    def write(self, records: list) -> None:
+        pass
 
-class JsonlWriter:
+
+class GelsightWriter(Writer):
     def __init__(self, path, metadata_path=None):
         self.path = Path(path)
         self.metadata_path = (
@@ -87,21 +93,27 @@ class JsonlWriter:
             image = cv2.cvtColor(image, conversions[encoding])
         return image
 
-    def write(self, records: dict[str, list]) -> None:
+    def write(self, records: list) -> None:
         if not records:
             return
 
         with self.path.open('a', encoding='utf-8') as recording:
-            for topic_records in records.values():
-                for record in topic_records:
-                    filename = f'{self._next_image_index:08d}.png'
-                    relative_path = Path('images') / filename
-                    image = self._decode_record(record)
-                    if not cv2.imwrite(str(self.path.parent / relative_path), image):
-                        raise RuntimeError(f'failed to write image {relative_path}')
-                    index_record = {
-                        'timestamp': record['timestamp'],
-                        'image': relative_path.as_posix(),
-                    }
-                    recording.write(json.dumps(index_record) + '\n')
-                    self._next_image_index += 1
+            for record in records:
+                filename = f'{self._next_image_index:08d}.png'
+                relative_path = Path('images') / filename
+                image = self._decode_record(record)
+                if not cv2.imwrite(str(self.path.parent / relative_path), image):
+                    raise RuntimeError(f'failed to write image {relative_path}')
+                index_record = {
+                    'timestamp': record['timestamp'],
+                    'image': relative_path.as_posix(),
+                }
+                recording.write(json.dumps(index_record) + '\n')
+                self._next_image_index += 1
+
+class ForceSensorWriter(Writer):
+    def __init__(self, path: str):
+        pass
+
+    def write(self, records: list) -> None:
+        pass

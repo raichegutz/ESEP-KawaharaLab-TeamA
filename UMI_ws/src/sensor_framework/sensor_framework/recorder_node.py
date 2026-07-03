@@ -6,7 +6,7 @@ from sensor_msgs.msg import Image
 from geometry_msgs.msg import WrenchStamped
 
 from .sensor_buffer import SensorDataBuffer
-from .writer import JsonlWriter
+from .writer import GelsightWriter, ForceSensorWriter
 from .converters import (
     array_msg_to_record,
     image_msg_to_metadata,
@@ -20,8 +20,9 @@ class ThreeTopicRecorder(Node):
 
         self.gelsight_buffer = SensorDataBuffer()
         self.force_buffer = SensorDataBuffer()
-        self.gelsight_writer = JsonlWriter("./data/recording.jsonl")
-        self.force_writer = JsonlWriter("./data/recording_force.jsonl")
+
+        self.gelsight_writer = GelsightWriter("./data/recording.jsonl")
+        self.force_writer = ForceSensorWriter("./data/recording_force.jsonl")
 
         # self.sub_image_left = self.create_subscription(
         #     Image,
