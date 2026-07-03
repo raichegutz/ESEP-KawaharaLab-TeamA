@@ -30,12 +30,7 @@ class GelsightWriter(Writer):
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.images_path = self.path.parent / 'images'
         self.images_path.mkdir(parents=True, exist_ok=True)
-        existing_indices = [
-            int(image.stem)
-            for image in self.images_path.glob('*.png')
-            if image.stem.isdigit()
-        ]
-        self._next_image_index = max(existing_indices, default=-1) + 1
+        self._next_image_indices = {}
         self._metadata = None
         if self.metadata_path.exists():
             with self.metadata_path.open(encoding='utf-8') as metadata_file:
@@ -93,23 +88,56 @@ class GelsightWriter(Writer):
             image = cv2.cvtColor(image, conversions[encoding])
         return image
 
-    def write(self, records: list) -> None:
+    @staticmethod
+    def _safe_camera_name(camera_name):
+        safe_name = ''.join(
+            character if character.isalnum() or character in '-_' else '_'
+            for character in camera_name
+        ).strip('_')
+        if not safe_name:
+            raise ValueError(f'invalid camera name: {camera_name!r}')
+        return safe_name
+
+    def _camera_paths(self, camera_name):
+        safe_name = self._safe_camera_name(camera_name)
+        index_path = self.path.with_name(
+            f'{self.path.stem}_{safe_name}{self.path.suffix}'
+        )
+        images_path = self.images_path / safe_name
+        images_path.mkdir(parents=True, exist_ok=True)
+
+        if safe_name not in self._next_image_indices:
+            existing_indices = [
+                int(image.stem)
+                for image in images_path.glob('*.png')
+                if image.stem.isdigit()
+            ]
+            self._next_image_indices[safe_name] = (
+                max(existing_indices, default=-1) + 1
+            )
+        return safe_name, index_path, images_path
+
+    def write(self, records: dict[str, list]) -> None:
         if not records:
             return
 
-        with self.path.open('a', encoding='utf-8') as recording:
-            for record in records:
-                filename = f'{self._next_image_index:08d}.png'
-                relative_path = Path('images') / filename
-                image = self._decode_record(record)
-                if not cv2.imwrite(str(self.path.parent / relative_path), image):
-                    raise RuntimeError(f'failed to write image {relative_path}')
-                index_record = {
-                    'timestamp': record['timestamp'],
-                    'image': relative_path.as_posix(),
-                }
-                recording.write(json.dumps(index_record) + '\n')
-                self._next_image_index += 1
+        for camera_name, camera_records in records.items():
+            safe_name, index_path, images_path = self._camera_paths(camera_name)
+            with index_path.open('a', encoding='utf-8') as recording:
+                for record in camera_records:
+                    image_index = self._next_image_indices[safe_name]
+                    filename = f'{image_index:08d}.png'
+                    image = self._decode_record(record)
+                    image_path = images_path / filename
+                    if not cv2.imwrite(str(image_path), image):
+                        raise RuntimeError(f'failed to write image {image_path}')
+                    relative_path = image_path.relative_to(self.path.parent)
+                    index_record = {
+                        'timestamp': record['timestamp'],
+                        'image': relative_path.as_posix(),
+                    }
+                    recording.write(json.dumps(index_record) + '\n')
+                    self._next_image_indices[safe_name] += 1
 
 class ForceSensorWriter(Writer):
     def __init__(self, path: str):

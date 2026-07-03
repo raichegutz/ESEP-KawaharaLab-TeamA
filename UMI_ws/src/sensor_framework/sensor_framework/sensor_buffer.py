@@ -1,19 +1,18 @@
 from collections import defaultdict
 from threading import Lock
 
-from .writer import Writer
-
 
 class SensorDataBuffer:
     def __init__(self):
-        self._data = list()
+        self._data: dict[str, list] = defaultdict(list)
         self._lock = Lock()
 
     def append(self, topic_name: str, data) -> None:
         with self._lock:
-            self._data.append(data)
+            self._data[topic_name].append(data)
 
-    def pop_all(self, writer: Writer) -> None:
+    def pop_all(self, writer) -> None:
         with self._lock:
-            writer.write(self._data)
+            records = self._data
+            writer.write(records)
             self._data.clear()
