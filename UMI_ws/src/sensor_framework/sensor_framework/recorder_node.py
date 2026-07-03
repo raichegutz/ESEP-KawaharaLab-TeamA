@@ -1,5 +1,7 @@
 #this code will subscribe to the topics published from the other packages# time_series_recorder/collector_node.py
 
+from pathlib import Path
+
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
@@ -21,22 +23,24 @@ class ThreeTopicRecorder(Node):
         self.gelsight_buffer = SensorDataBuffer()
         self.force_buffer = SensorDataBuffer()
 
-        self.gelsight_writer = GelsightWriter("./data/recording.jsonl")
-        self.force_writer = ForceSensorWriter("./data/recording_force.jsonl")
+        data_path = Path("./data").resolve()
+        self.gelsight_writer = GelsightWriter(data_path)
+        self.force_writer = ForceSensorWriter(data_path / "recording_force.jsonl")
+        self.get_logger().info(f"Recording sensor data in {data_path}")
 
-        # self.sub_image_left = self.create_subscription(
-        #     Image,
-        #     "/gelsight/left/image_raw",
-        #     lambda msg: self.image_callback(msg, "gelsight_left"),
-        #     10
-        # )
+        self.sub_image_left = self.create_subscription(
+            Image,
+            "/gelsight/left/image_raw",
+            lambda msg: self.image_callback(msg, "gelsight_left"),
+            10,
+        )
 
-        #self.sub_image_right = self.create_subscription(
-        #    Image,
-        #    "/gelsight/right/image_raw",
-        #    lambda msg: self.image_callback(msg, "gelsight_right"),
-        #    10
-        #)
+        self.sub_image_right = self.create_subscription(
+            Image,
+            "/gelsight/right/image_raw",
+            lambda msg: self.image_callback(msg, "gelsight_right"),
+            10,
+        )
 
         self.sub_force_left = self.create_subscription(
              WrenchStamped,

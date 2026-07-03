@@ -22,13 +22,11 @@ class Writer(ABC):
 
 
 class GelsightWriter(Writer):
-    def __init__(self, path, metadata_path=None):
-        self.path = Path(path)
-        self.metadata_path = (
-            Path(metadata_path) if metadata_path else self.path.with_name('metadata.json')
-        )
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.images_path = self.path.parent / 'images'
+    def __init__(self, data_path):
+        self.data_path = Path(data_path)
+        self.data_path.mkdir(parents=True, exist_ok=True)
+        self.metadata_path = self.data_path / 'metadata.json'
+        self.images_path = self.data_path / 'images'
         self.images_path.mkdir(parents=True, exist_ok=True)
         self._next_image_indices = {}
         self._metadata = None
@@ -100,9 +98,7 @@ class GelsightWriter(Writer):
 
     def _camera_paths(self, camera_name):
         safe_name = self._safe_camera_name(camera_name)
-        index_path = self.path.with_name(
-            f'{self.path.stem}_{safe_name}{self.path.suffix}'
-        )
+        index_path = self.data_path / f'recording_{safe_name}.jsonl'
         images_path = self.images_path / safe_name
         images_path.mkdir(parents=True, exist_ok=True)
 
@@ -131,7 +127,7 @@ class GelsightWriter(Writer):
                     image_path = images_path / filename
                     if not cv2.imwrite(str(image_path), image):
                         raise RuntimeError(f'failed to write image {image_path}')
-                    relative_path = image_path.relative_to(self.path.parent)
+                    relative_path = image_path.relative_to(self.data_path)
                     index_record = {
                         'timestamp': record['timestamp'],
                         'image': relative_path.as_posix(),
