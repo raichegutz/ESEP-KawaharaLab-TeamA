@@ -21,13 +21,17 @@ class GoProNode(Node):
         self.width = int(self.get_parameter('width').value)
         self.height = int(self.get_parameter('height').value)
         self.fps = float(self.get_parameter('fps').value)
-        self.pixel_format = self.get_parameter('pixel_format').value
+        self.pixel_format = str(self.get_parameter('pixel_format').value).strip().upper()
 
         self.bridge = CvBridge()
         self.publisher = self.create_publisher(Image, '/gopro/image_raw', 10)
 
         self.cap = cv2.VideoCapture(self.video_device, cv2.CAP_V4L2)
         if self.pixel_format:
+            if len(self.pixel_format) != 4:
+                self.get_logger().warn(
+                    f'Expected a 4-character pixel_format, got {self.pixel_format!r}.'
+                )
             fourcc = cv2.VideoWriter_fourcc(*self.pixel_format[:4])
             self.cap.set(cv2.CAP_PROP_FOURCC, fourcc)
         self.cap.set(cv2.CAP_PROP_CONVERT_RGB, 1)
