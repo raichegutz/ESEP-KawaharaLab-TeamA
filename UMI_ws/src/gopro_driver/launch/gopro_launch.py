@@ -2,6 +2,7 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
@@ -42,12 +43,30 @@ def generate_launch_description():
             name='gopro_node',
             output='screen',
             parameters=[{
-                'video_device': LaunchConfiguration('video_device'),
-                'width': LaunchConfiguration('width'),
-                'height': LaunchConfiguration('height'),
-                'fps': LaunchConfiguration('fps'),
-                'frame_id': LaunchConfiguration('frame_id'),
-                'pixel_format': LaunchConfiguration('pixel_format'),
+                'video_device': ParameterValue(
+                    LaunchConfiguration('video_device'),
+                    value_type=str,
+                ),
+                'width': ParameterValue(
+                    LaunchConfiguration('width'),
+                    value_type=int,
+                ),
+                'height': ParameterValue(
+                    LaunchConfiguration('height'),
+                    value_type=int,
+                ),
+                'fps': ParameterValue(
+                    LaunchConfiguration('fps'),
+                    value_type=float,
+                ),
+                'frame_id': ParameterValue(
+                    LaunchConfiguration('frame_id'),
+                    value_type=str,
+                ),
+                'pixel_format': ParameterValue(
+                    LaunchConfiguration('pixel_format'),
+                    value_type=str,
+                ),
             }],
         ),
     ])
