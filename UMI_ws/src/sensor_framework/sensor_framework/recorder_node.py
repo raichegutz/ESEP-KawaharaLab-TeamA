@@ -66,7 +66,7 @@ class ThreeTopicRecorder(Node):
 
     def force_callback(self, msg: WrenchStamped, topic_name: str):
         record = {
-            "stamp": msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9,
+            "stamp": (msg.header.stamp.sec * 1_000_000_000) + msg.header.stamp.nanosec,
             "fx": msg.wrench.force.x,
             "fy": msg.wrench.force.y,
             "fz": msg.wrench.force.z,
