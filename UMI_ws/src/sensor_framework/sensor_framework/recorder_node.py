@@ -44,14 +44,14 @@ class ThreeTopicRecorder(Node):
 
         self.sub_force_left = self.create_subscription(
              WrenchStamped,
-             "/sync/force_torque/left",
+             "/force_torque/left",
              lambda msg: self.force_callback(msg, "mms101_left"),
              10,
         )
 
         self.sub_force_right = self.create_subscription(
             WrenchStamped,
-            "/sync/force_torque/right",
+            "/force_torque/right",
             lambda msg: self.force_callback(msg, "mms101_right"),
             10,
         )
