@@ -58,6 +58,7 @@ private:
   double torque_scale_;
   rclcpp::Publisher<geometry_msgs::msg::WrenchStamped>::SharedPtr publisher_;
   rclcpp::TimerBase::SharedPtr timer_;
+  std::vector<uint8_t> rx_buffer_;
 
   // シリアルポートを開く [cite: 30]
   // Baudrate: 1,000,000 bps, 8bit, No parity, 1 stop bit
@@ -195,6 +196,7 @@ private:
     // Byte 19-21: Mz
     // Byte 22-24: Time
     
+    /*
     uint8_t buf[25];
     int n = read(serial_fd_, buf, 25);
     
@@ -224,6 +226,60 @@ private:
 
         publisher_->publish(msg);
     }
+    */
+
+    uint8_t temp[128];
+    int n = read(serial_fd_, temp, sizeof(temp));
+
+    if (n < 0) {
+        RCLCPP_ERROR(this->get_logger(), "Error reading from serial port: %s", strerror(errno));
+        return;
+    }
+
+    if (n > 0){
+        rx_buffer_.insert(rx_buffer_.end(), temp, temp + n);
+    }
+
+    size_t start = 0;
+    //check for validity bytes 00 17 80 00
+    while (start + 25 <= rx_buffer_.size()) {
+        // Status Check (0x00 is OK) [cite: 76]
+        if (rx_buffer_[start] != 0x00){
+          start++;
+          continue;
+        };
+
+        if (rx_buffer_[start] == 0x00 && rx_buffer_[start + 1] == 0x17 && rx_buffer_[start + 2] == 0x80 && rx_buffer_[start + 3] == 0x00) {
+            //valid data packet
+            int32_t raw_fx = parse_24bit_be(&rx_buffer_[start + 4]);
+            int32_t raw_fy = parse_24bit_be(&rx_buffer_[start + 7]);
+            int32_t raw_fz = parse_24bit_be(&rx_buffer_[start + 10]);
+            int32_t raw_mx = parse_24bit_be(&rx_buffer_[start + 13]);
+            int32_t raw_my = parse_24bit_be(&rx_buffer_[start + 16]);
+            int32_t raw_mz = parse_24bit_be(&rx_buffer_[start + 19]); 
+
+            auto msg = geometry_msgs::msg::WrenchStamped();
+            msg.header.stamp = this->now();
+            msg.header.frame_id = frame_id_;
+
+            msg.wrench.force.x = raw_fx * force_scale_;
+            msg.wrench.force.y = raw_fy * force_scale_;
+            msg.wrench.force.z = raw_fz * force_scale_;
+            msg.wrench.torque.x = raw_mx * torque_scale_;
+            msg.wrench.torque.y = raw_my * torque_scale_;
+            msg.wrench.torque.z = raw_mz * torque_scale_;
+
+            publisher_->publish(msg);
+
+            start+=25;
+        }
+        else{
+            //invalid data packet, discard first byte
+            start++;
+        }
+      }
+      //clear the buffer of the processed packet
+      rx_buffer_.erase(rx_buffer_.begin(),rx_buffer_.begin() + start);
   }
 };
 
