@@ -100,7 +100,7 @@ private:
       RCLCPP_ERROR(this->get_logger(), "Error writing to serial port: %s", strerror(errno));
     }
     else if(static_cast<size_t>(bytes_written) != cmd.size()) {
-      RCLCPP_ERROR(this->get_logger(), "Incomplete write to serial port. Expected %zu bytes, wrote %zd bytes.", cmd.size(), bytes_written);
+      RCLCPP_ERROR(this->get_logger(), "Incomplete write to serial port. Expected %zu bytes, wrote %d bytes.", cmd.size(), bytes_written);
     }
 
     // 少し待機（コマンド処理時間）
@@ -124,11 +124,11 @@ private:
       }
 
       if (buf[0] != 0x00){
-          RCLCPP_ERROR(this->get_logger(),"%s: Sensor returned error status 0x%02X (read %zd bytes).",command_name.c_str(),buf[0],n);
+          RCLCPP_ERROR(this->get_logger(),"%s: Sensor returned error status 0x%02X (read %d bytes).",command_name.c_str(),buf[0],n);
           return false;
       }
 
-      RCLCPP_INFO(this->get_logger(),"%s: OK (read %zd bytes).",command_name.c_str(),n);
+      RCLCPP_INFO(this->get_logger(),"%s: OK (read %d bytes).",command_name.c_str(),n);
       return true;
   }
 
