@@ -94,15 +94,42 @@ private:
   }
 
   void send_command(const std::vector<uint8_t>& cmd) {
-    write(serial_fd_, cmd.data(), cmd.size());
+    ssize_t bytes_written= write(serial_fd_, cmd.data(), cmd.size());
+    
+    if (bytes_written < 0) {
+      RCLCPP_ERROR(this->get_logger(), "Error writing to serial port: %s", strerror(errno));
+    }
+    else if(bytes_written != cmd.size()) {
+      RCLCPP_ERROR(this->get_logger(), "Incomplete write to serial port. Expected %zu bytes, wrote %zd bytes.", cmd.size(), bytes_written);
+    }
+
     // 少し待機（コマンド処理時間）
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
   }
 
   // 応答読み捨て用（設定コマンド等のレスポンス）
-  void flush_response() {
-    uint8_t buf[64];
-    read(serial_fd_, buf, sizeof(buf));
+ // Read and validate a command response
+  bool flush_response(const std::string &command_name){
+      uint8_t buf[64];
+      int n = read(serial_fd_, buf, sizeof(buf));
+
+      if (n < 0){
+          RCLCPP_ERROR(this->get_logger(), "%s: Serial read failed.", command_name.c_str());
+          return false;
+      }
+
+      if (n == 0){
+          RCLCPP_ERROR(this->get_logger(),"%s: No response received.",command_name.c_str());
+          return false;
+      }
+
+      if (buf[0] != 0x00){
+          RCLCPP_ERROR(this->get_logger(),"%s: Sensor returned error status 0x%02X (read %d bytes).",command_name.c_str(),buf[0],n);
+          return false;
+      }
+
+      RCLCPP_INFO(this->get_logger(),"%s: OK (read %d bytes).",command_name.c_str(),n);
+      return true;
   }
 
   // 初期化シーケンス 
@@ -113,18 +140,24 @@ private:
     // 1. Board Select (ID=0x00) [cite: 90]
     // Cmd: 54 02 10 00
     send_command({0x54, 0x02, 0x10, 0x00});
-    flush_response();
+    if(!flush_response("Board Select")) {
+      return false;
+    }
 
     // 2. Power Switch (VDD12 ON) [cite: 128]
     // Cmd: 54 03 36 00 01
     send_command({0x54, 0x03, 0x36, 0x00, 0x01});
-    flush_response();
+    if(!flush_response("Power Switch (VDD12 ON)")) {
+      return false;
+    }
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
     // 2. Power Switch (VDD45 ON) [cite: 128]
     // Cmd: 54 03 36 05 01 (LDO ID 0x05 for VDD45)
     send_command({0x54, 0x03, 0x36, 0x05, 0x01});
-    flush_response();
+    if(!flush_response("Power Switch (VDD45 ON)")) {
+      return false;
+    }
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
     // 3. Axis Select & Idle Loop [cite: 310, 161]
@@ -133,13 +166,17 @@ private:
       // Axis Select [cite: 145]
       // Cmd: 54 02 1C [axis]
       send_command({0x54, 0x02, 0x1C, axis});
-      flush_response();
+      if(!flush_response("Axis Select")) {
+        return false;
+      }
 
       // Idle Command [cite: 169]
       // Cmd: 53 02 57 94 (Instruction Code is 0x53)
       send_command({0x53, 0x02, 0x57, 0x94});
-      flush_response();
-      
+      if(!flush_response("Idle Command")) {
+        return false;
+      }
+
       // Idle状態になるまで10msec待つ [cite: 162]
       std::this_thread::sleep_for(std::chrono::milliseconds(15));
     }
@@ -147,12 +184,16 @@ private:
     // 4. Bootload (マトリクス係数読み出し) [cite: 182]
     // Cmd: 54 01 B0
     send_command({0x54, 0x01, 0xB0});
-    flush_response();
+    if(!flush_response("Bootload")) {
+      return false;
+    }
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
     // Interval Measureコマンド
     send_command({0x54, 0x04, 0x43, 0x00, 0x27, 0x10}); // 10ms間隔
-    flush_response();
+    if(!flush_response("Interval Measure")) {
+      return false;
+    }
 
     // 5. Start (測定開始) [cite: 283]
     // Cmd: 54 02 23 00
@@ -160,7 +201,9 @@ private:
     
     // 初回のレスポンスはStatusのみなので読み捨てる [cite: 273]
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    flush_response();
+    if(!flush_response("Start")) {
+      return false;
+    }
 
     return true;
   }
