@@ -9,4 +9,4 @@ Thumbs.db
 
 .vscode
 
-UMI_ws/src/sensor_framework/data/*
+UMI_ws/data/*
