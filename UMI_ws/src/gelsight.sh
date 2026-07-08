@@ -1,0 +1,1 @@
+ros2 launch ros2_gelsight_package gelsight_publisher.launch.py
