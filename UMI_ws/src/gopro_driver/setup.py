@@ -30,6 +30,7 @@ setup(
     entry_points={
         'console_scripts': [
             'gopro_node = gopro_driver.gopro_node:main',
+            'gopro_control_node = gopro_driver.gopro_control_node:main',
         ],
     },
 )
