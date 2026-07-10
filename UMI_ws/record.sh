@@ -32,11 +32,6 @@ if ! [[ "${episode_duration_sec}" =~ ^([0-9]+([.][0-9]*)?|[.][0-9]+)$ ]] ||
     exit 2
 fi
 
-if [[ -f "${workspace_dir}/install/setup.bash" ]]; then
-    # shellcheck disable=SC1091
-    source "${workspace_dir}/install/setup.bash"
-fi
-
 exec ros2 launch sensor_framework launch.py \
     "num_episodes:=${num_episodes}" \
     "episode_duration_sec:=${episode_duration_sec}" \
