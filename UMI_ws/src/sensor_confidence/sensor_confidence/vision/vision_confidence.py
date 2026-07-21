@@ -1,4 +1,4 @@
-from sensor_confidence.sensor_confidence.common import utils
+from sensor_confidence.common import utils
 from .models import VisionPenalties, VisionHealth, VisionThresholds
 import numpy as np
 

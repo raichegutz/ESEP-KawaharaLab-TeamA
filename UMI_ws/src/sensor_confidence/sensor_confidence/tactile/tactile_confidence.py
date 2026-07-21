@@ -1,4 +1,4 @@
-from sensor_confidence.sensor_confidence.common import utils
+from sensor_confidence.common import utils
 from .models import TactilePenalties, TactileHealth, TactileThresholds
 import numpy as np
 

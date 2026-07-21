@@ -1,4 +1,4 @@
-from sensor_confidence.sensor_confidence.common.rolling_buffer import RollingBuffer, Sample
+from sensor_confidence.common.rolling_buffer import RollingBuffer, Sample
 
 import cv2
 import numpy as np

@@ -1,5 +1,4 @@
 from .models import ForceFeatures, ForceScalarData, ForceArrayData, ForceWindow
-from sensor_confidence.sensor_confidence.common import utils
 import numpy as np
 
 

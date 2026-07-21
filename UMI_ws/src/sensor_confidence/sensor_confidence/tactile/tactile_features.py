@@ -1,7 +1,7 @@
 from numpy import np
 import cv2
 from .models import TactileFeatures
-from sensor_confidence.sensor_confidence.common import utils
+from sensor_confidence.common import utils
 
 
 class TactileFeatureExtractor:

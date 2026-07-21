@@ -1,4 +1,4 @@
-from sensor_confidence.sensor_confidence.common import utils
+from sensor_confidence.common import utils
 from .models import ForcePenalties, ForceHealth, ForceThresholds
 import numpy as np
 
