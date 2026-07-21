@@ -319,7 +319,7 @@ private:
   }
 
 
-  void read_data_callback()
+  bool read_data_callback()
   {
     // レスポンスフォーマット (25 bytes) [cite: 276]
     // Byte 0: Status
@@ -386,7 +386,7 @@ private:
         RCLCPP_ERROR(this->get_logger(),
                     "Error reading from serial port: %s",
                     strerror(errno));
-        return;
+        return false;
     }
 
     if (n > 0){
@@ -433,6 +433,8 @@ private:
       }
       //clear the buffer of the processed packet
       rx_buffer_.erase(rx_buffer_.begin(),rx_buffer_.begin() + start);
+
+      return true;
   }
 };
 
