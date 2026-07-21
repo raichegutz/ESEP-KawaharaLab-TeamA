@@ -58,14 +58,6 @@ class ForceFeatures:
     frequency_entropy: ForceScalarData
 
 
-    
-@dataclass
-class ForceHealth:
-    confidence: float
-    total_penalty: float
-    penalties: ForcePenalties
-
-
 @dataclass
 class ForcePenalties:
     rms: float = 0.0
@@ -79,6 +71,13 @@ class ForcePenalties:
     high_freq_ratio: float = 0.0
     frequency_entropy: float = 0.0
     left_right_consistency: float = 0.0
+
+    
+@dataclass
+class ForceHealth:
+    confidence: float
+    total_penalty: float
+    penalties: ForcePenalties
     
 
 
