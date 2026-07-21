@@ -19,13 +19,6 @@ class VisionFeatures:
     jitter: float
 
 @dataclass
-class VisionHealth:
-    confidence: float
-    total_penalty: float
-    penalties: VisionPenalties
-
-
-@dataclass
 class VisionPenalties:
     mean: float = 0.0
     variance: float = 0.0
@@ -34,6 +27,12 @@ class VisionPenalties:
     entropy: float = 0.0
     dark_pixel_ratio: float = 0.0
     jitter: float = 0.0
+    
+@dataclass
+class VisionHealth:
+    confidence: float
+    total_penalty: float
+    penalties: VisionPenalties
 
 
 @dataclass

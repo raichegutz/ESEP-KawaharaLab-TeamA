@@ -20,13 +20,6 @@ class TactileFeatures:
     left_right_consistency: float
 
 @dataclass
-class TactileHealth:
-    confidence: float
-    total_penalty: float
-    penalties: TactilePenalties
-
-
-@dataclass
 class TactilePenalties:
     variance: float = 0.0
     blur: float = 0.0
@@ -36,6 +29,14 @@ class TactilePenalties:
     entropy: float = 0.0
     jitter: float = 0.0
     left_right_consistency: float = 0.0
+
+    
+@dataclass
+class TactileHealth:
+    confidence: float
+    total_penalty: float
+    penalties: TactilePenalties
+
 
 
 @dataclass
