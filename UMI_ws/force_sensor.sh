@@ -1,1 +1,1 @@
-ros2 launch mms101_driver mms101_dual.launch.py
+chrt -f 99 taskset -c 2 ros2 launch mms101_driver mms101_dual.launch.py
