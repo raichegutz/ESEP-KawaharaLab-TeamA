@@ -42,7 +42,7 @@ public:
         // 10ms間隔 (100Hz) でデータを取得しにいくタイマー
         
         ///////////////////////////////////////////////////////////////////
-        /*
+        
         timer_ = this->create_wall_timer(
           std::chrono::milliseconds(10), std::bind(&MMS101Node::read_data_callback, this));
         
@@ -291,8 +291,7 @@ private:
             continue;
         }
 
-        RCLCPP_INFO(this->get_logger(), "Sensor connected.");
-
+        RCLCPP_INFO(this->get_logger(), "Sensor initialized successfully. Starting loop.");
         /////////////////////////////////////////////////////////////////
         // Read until disconnected
         /////////////////////////////////////////////////////////////////
@@ -383,10 +382,19 @@ private:
 
     if (n < 0)
     {
-        RCLCPP_ERROR(this->get_logger(),
-                    "Error reading from serial port: %s",
-                    strerror(errno));
-        return false;
+      if (errno == ENOENT)
+      {
+          // Device not present yet.
+          return false;
+      }
+
+      RCLCPP_ERROR(
+          this->get_logger(),
+          "Error opening %s: %s",
+          port_name_.c_str(),
+          strerror(errno));
+
+      return false;
     }
 
     if (n > 0){
