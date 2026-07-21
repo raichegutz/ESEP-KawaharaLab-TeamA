@@ -11,7 +11,8 @@
 #include <iostream>
 #include <vector>
 #include <cstring>
-
+#include <thread>
+#include <atomic>
 
 class MMS101Node : public rclcpp::Node
 {
@@ -37,8 +38,13 @@ public:
       if (initialize_sensor()) {
         RCLCPP_INFO(this->get_logger(), "Sensor initialized successfully. Starting loop.");
         // 10ms間隔 (100Hz) でデータを取得しにいくタイマー
+        
+        ///////////////////////////////////////////////////////////////////
+        /*
         timer_ = this->create_wall_timer(
           std::chrono::milliseconds(10), std::bind(&MMS101Node::read_data_callback, this));
+        */
+        serial_thread_ = std::thread(&MMS101Node::serial_loop, this);
       } else {
         RCLCPP_ERROR(this->get_logger(), "Failed to initialize sensor.");
       }
@@ -46,8 +52,20 @@ public:
   }
 
   ~MMS101Node() {
+    /////////////////////////////////////////////////////////////////////////
+    /*
     stop_measurement();
     if (serial_fd_ != -1) close(serial_fd_);
+    */
+    running_ = false;
+
+    if (serial_thread_.joinable())
+        serial_thread_.join();
+
+    stop_measurement();
+
+    if (serial_fd_ != -1)
+        close(serial_fd_);
   }
 
 private:
@@ -57,8 +75,12 @@ private:
   double force_scale_;
   double torque_scale_;
   rclcpp::Publisher<geometry_msgs::msg::WrenchStamped>::SharedPtr publisher_;
-  rclcpp::TimerBase::SharedPtr timer_;
+  //////////////////////////////////////////////rclcpp::TimerBase::SharedPtr timer_;
   std::vector<uint8_t> rx_buffer_;
+
+  //////////////////////
+  std::thread serial_thread_;
+  std::atomic<bool> running_{true};
 
   // シリアルポートを開く [cite: 30]
   // Baudrate: 1,000,000 bps, 8bit, No parity, 1 stop bit
@@ -80,8 +102,13 @@ private:
     tty.c_iflag &= ~IGNBRK; // disable break processing
     tty.c_lflag = 0; // no signaling chars, no echo, no canonical processing
     tty.c_oflag = 0; // no remapping, no delays
+    //////////////////////////////////////////////////
+    /*
     tty.c_cc[VMIN]  = 0; // read doesn't block
     tty.c_cc[VTIME] = 1; // 0.1 seconds read timeout
+    */
+    tty.c_cc[VMIN]  = 25; // read doesn't block
+    tty.c_cc[VTIME] = 0; // 0.1 seconds read timeout
 
     tty.c_iflag &= ~(IXON | IXOFF | IXANY); // shut off xon/xoff ctrl
     tty.c_cflag |= (CLOCAL | CREAD); // ignore modem controls, enable reading
@@ -224,6 +251,18 @@ private:
     return val;
   }
 
+
+
+  ////////////////////////////////////////////////////////////////////////
+  void serial_loop()
+  {
+      while (rclcpp::ok() && running_)
+      {
+          read_data_callback();
+      }
+  }
+
+
   void read_data_callback()
   {
     // レスポンスフォーマット (25 bytes) [cite: 276]
@@ -272,10 +311,25 @@ private:
     */
 
     uint8_t temp[128];
+    
+    /////////////////////////////////////////////////////////////////////////
+    /*
     int n = read(serial_fd_, temp, sizeof(temp));
 
     if (n < 0) {
         RCLCPP_ERROR(this->get_logger(), "Error reading from serial port: %s", strerror(errno));
+        return;
+    }
+    */
+
+    int n = read(serial_fd_, temp, sizeof(temp));
+    rclcpp::Time rx_stamp = this->get_clock()->now();
+
+    if (n < 0)
+    {
+        RCLCPP_ERROR(this->get_logger(),
+                    "Error reading from serial port: %s",
+                    strerror(errno));
         return;
     }
 
@@ -302,7 +356,7 @@ private:
             int32_t raw_mz = parse_24bit_be(&rx_buffer_[start + 19]); 
 
             auto msg = geometry_msgs::msg::WrenchStamped();
-            msg.header.stamp = this->now();
+            msg.header.stamp = rx_stamp;
             msg.header.frame_id = frame_id_;
 
             msg.wrench.force.x = raw_fx * force_scale_;
