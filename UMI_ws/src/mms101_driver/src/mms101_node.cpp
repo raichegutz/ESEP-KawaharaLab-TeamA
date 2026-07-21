@@ -34,6 +34,8 @@ public:
 
     publisher_ = this->create_publisher<geometry_msgs::msg::WrenchStamped>("force_torque", 10);
 
+    ////////////////////////////////////////////////////////////
+    /*
     if (open_serial_port()) {
       if (initialize_sensor()) {
         RCLCPP_INFO(this->get_logger(), "Sensor initialized successfully. Starting loop.");
@@ -43,12 +45,15 @@ public:
         /*
         timer_ = this->create_wall_timer(
           std::chrono::milliseconds(10), std::bind(&MMS101Node::read_data_callback, this));
-        */
+        
         serial_thread_ = std::thread(&MMS101Node::serial_loop, this);
       } else {
         RCLCPP_ERROR(this->get_logger(), "Failed to initialize sensor.");
       }
     }
+    */
+    serial_thread_ = std::thread(&MMS101Node::serial_loop, this);
+
   }
 
   ~MMS101Node() {
@@ -256,10 +261,61 @@ private:
   ////////////////////////////////////////////////////////////////////////
   void serial_loop()
   {
-      while (rclcpp::ok() && running_)
-      {
-          read_data_callback();
-      }
+    while (rclcpp::ok() && running_)
+    {
+        /////////////////////////////////////////////////////////////////
+        // Open serial port
+        /////////////////////////////////////////////////////////////////
+
+        if (!open_serial_port())
+        {
+            RCLCPP_WARN(
+                this->get_logger(),
+                "Waiting for sensor on %s...",
+                port_name_.c_str());
+
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            continue;
+        }
+
+        /////////////////////////////////////////////////////////////////
+        // Initialize sensor
+        /////////////////////////////////////////////////////////////////
+
+        if (!initialize_sensor())
+        {
+            close(serial_fd_);
+            serial_fd_ = -1;
+
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            continue;
+        }
+
+        RCLCPP_INFO(this->get_logger(), "Sensor connected.");
+
+        /////////////////////////////////////////////////////////////////
+        // Read until disconnected
+        /////////////////////////////////////////////////////////////////
+
+        while (rclcpp::ok() && running_)
+        {
+            if (!read_data_callback())
+            {
+                break;
+            }
+        }
+
+        /////////////////////////////////////////////////////////////////
+        // Cleanup after disconnect
+        /////////////////////////////////////////////////////////////////
+
+        stop_measurement();
+
+        close(serial_fd_);
+        serial_fd_ = -1;
+
+        RCLCPP_WARN(this->get_logger(), "Sensor disconnected.");
+    }
   }
 
 
