@@ -148,6 +148,7 @@ class GelSightMini:
         self.border_fraction: float = border_fraction
         self.video_writer = None
         self.serial_number = None
+        self.timestamp = None
 
 
     def get_device_list(self) -> dict:
@@ -298,6 +299,7 @@ class GelSightMini:
 
         try:
             frame = self.camera.read_frame()
+            self.timestamp = time.time_ns()
         except Exception as e:
             log_message(f"Error reading frame: {e}")
             return None

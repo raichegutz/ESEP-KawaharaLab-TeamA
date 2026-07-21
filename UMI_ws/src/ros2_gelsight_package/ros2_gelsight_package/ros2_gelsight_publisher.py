@@ -60,6 +60,8 @@ class GelSightMiniPublisher(Node):
 
     def _publish_frame(self) -> None:
         frame = self._cam_stream.update(0.0)
+        
+
         if frame is None:
             self.get_logger().warn(
                 "No frame received from GelSight Mini camera",
@@ -68,7 +70,9 @@ class GelSightMiniPublisher(Node):
             return
 
         msg = self._bridge.cv2_to_imgmsg(frame, encoding="rgb8")
-        msg.header.stamp = self.get_clock().now().to_msg()
+        capture_ns = self._cam_stream.timestamp
+        msg.header.stamp.sec = capture_ns // 1000000000
+        msg.header.stamp.nanosec = capture_ns % 1000000000
         msg.header.frame_id = self._frame_id
         self._publisher.publish(msg)
 
