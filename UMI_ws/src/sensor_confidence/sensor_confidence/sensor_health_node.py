@@ -3,7 +3,10 @@ from rclpy.node import Node
 from geometry_msgs.msg import WrenchStamped
 from sensor_msgs.msg import Image, Range
 from std_msgs.msg import Float32
-from pynput import keyboard
+import sys
+import termios
+import tty
+import threading
 
 from sensor_confidence.sensor_confidence.force_torque.force_estimator import ForceHealthEstimator
 from sensor_confidence.sensor_confidence.vision.vision_confidence import VisionHealthEstimator
@@ -86,41 +89,53 @@ class SensorHealthNode(Node):
         #intialize sensor fuser
         self.sensor_fuser = SensorFusion()
 
-        #intialize task phase
-        self.task_phase = TaskPhase.APPROACH
-
+      
         #initialize keyboard listener to change task phase
-        self.keyboard_listener = keyboard.Listener(
-            on_press=self.on_key_press
-        )
+        self._state_lock = threading.Lock()
+        self.task_phase = TaskPhase.IDLE
 
-        self.keyboard_listener.daemon = True
-        self.keyboard_listener.start()
+        # Save terminal settings to restore them on shutdown
+        self.settings = termios.tcgetattr(sys.stdin)
+
+        # Start a native background thread to listen to the terminal stdin
+        self.input_thread = threading.Thread(target=self.keyboard_loop)
+        self.input_thread.daemon = True 
+        self.input_thread.start()
 
         #publish confidence values at a fixed rate
         self.publish_rate_hz = 10.0
         self.timer = self.create_timer(1.0 / self.publish_rate_hz, self.publish_confidence)
 
-    def on_key_press(self, key):
-        try:
-            if key.char == "0":
-                self.task_phase = TaskPhase.IDLE
-            elif key.char == "1":
-                self.task_phase = TaskPhase.APPROACH
-            elif key.char == "2":
-                self.task_phase = TaskPhase.GRASP
-            elif key.char == "3":
-                self.task_phase = TaskPhase.LIFT
-            elif key.char == "4":
-                self.task_phase = TaskPhase.RELEASE
+    
+    def get_key(self):
+        """Reads a single keypress from the terminal window."""
+        tty.setraw(sys.stdin.fileno())
+        # Select waits for characters without blocking the CPU
+        key = sys.stdin.read(1)
+        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.settings)
+        return key
+    
+
+    def keyboard_loop(self):
+        self.get_logger().info("Press 0-4 to change task phases.")
+        while rclpy.ok():
+            key = self.get_key()
+            new_phase = None
+            
+            if key == "0": new_phase = TaskPhase.IDLE
+            elif key == "1": new_phase = TaskPhase.APPROACH
+            elif key == "2": new_phase = TaskPhase.GRASP
+            elif key == "3": new_phase = TaskPhase.LIFT
+            elif key == "4": new_phase = TaskPhase.RELEASE
+            elif key == '\x03': # Ctrl+C code
+                break
             else:
-                return
-            self.get_logger().info(
-                f"Task phase changed to {self.task_phase.name}"
-            )
-        except AttributeError:
-            # Ignore special keys like Shift, Ctrl, etc.
-            pass
+                continue
+
+            if new_phase is not None:
+                with self._state_lock:
+                    self.task_phase = new_phase
+                self.get_logger().info(f"Task phase changed to {new_phase.name}")
 
 
 
