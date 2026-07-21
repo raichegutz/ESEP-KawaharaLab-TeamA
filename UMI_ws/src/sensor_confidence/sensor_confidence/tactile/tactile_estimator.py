@@ -1,17 +1,9 @@
-from sensor_confidence.sensor_confidence.common.utils import Utils
 from sensor_confidence.sensor_confidence.common.rolling_buffer import RollingBuffer, Sample
 
 import cv2
-from cv_bridge import CvBridge
-import rclpy
-from rclpy.node import Node
-from sensor_msgs.msg import Image
-from sensor_msgs.msg import WrenchStamped
-import numpy as np
-from collections import deque
 import numpy as np
 
-from .models import TactileWindow, TactileHealth, TactilePenalties, TactileThresholds
+from .models import TactileWindow, TactileThresholds
 from .tactile_features import TactileFeatureExtractor
 from .tactile_confidence import TactileConfidenceEstimator
 

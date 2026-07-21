@@ -9,7 +9,7 @@ import tty
 import threading
 
 from sensor_confidence.sensor_confidence.force_torque.force_estimator import ForceHealthEstimator
-from sensor_confidence.sensor_confidence.vision.vision_confidence import VisionHealthEstimator
+from sensor_confidence.sensor_confidence.vision.vision_estimator import VisionHealthEstimator
 from sensor_confidence.sensor_confidence.tactile.tactile_estimator import TactileHealthEstimator
 from sensor_confidence.sensor_confidence.ToF.ToF_features import ToFDataProcessor
 from sensor_confidence.sensor_confidence.fusion.sensor_fusion import SensorFusion

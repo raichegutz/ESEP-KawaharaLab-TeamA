@@ -1,4 +1,4 @@
-from dataclass import dataclass
+from dataclasses import dataclass
 from typing import Any
 from rclpy.time import Time
 from collections import deque

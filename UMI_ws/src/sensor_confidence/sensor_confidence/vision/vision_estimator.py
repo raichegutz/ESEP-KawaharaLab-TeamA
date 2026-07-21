@@ -2,17 +2,13 @@ from sensor_confidence.sensor_confidence.common.utils import Utils
 from sensor_confidence.sensor_confidence.common.rolling_buffer import RollingBuffer, Sample
 
 import cv2
-from cv_bridge import CvBridge
-import rclpy
-from rclpy.node import Node
-from sensor_msgs.msg import Image
 import numpy as np
 from collections import deque
 import numpy as np
 
-from .models import VisionWindow,VisionHealth, VisionPenalties
+from .models import VisionWindow,VisionHealth
 from .vision_features import VisionFeatureExtractor
-from .Vision_confidence import VisionConfidenceEstimator
+from .vision_confidence import VisionConfidenceEstimator
 
 
 class VisionHealthEstimator:

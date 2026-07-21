@@ -1,10 +1,6 @@
 import numpy as np
 
-from force_torque.models import ForceFeatures, ForceHealth, ForcePenalties
-from sensor_confidence.sensor_confidence.tactile import tactile_confidence
-from vision.models import VisionFeatures, VisionHealth, VisionPenalties
-from tactile.models import TactileFeatures, TactileHealth, TactilePenalties
-from sensor_confidence.common.task_phase import TaskPhase
+from sensor_confidence.sensor_confidence.common.task_phase import TaskPhase
 from .models import FusionThresholds
 
 class SensorFusion:
