@@ -1,7 +1,8 @@
-from numpy import np
+import numpy as np
 import cv2
 from .models import VisionFeatures
 from sensor_confidence.sensor_confidence.common import utils
+
 
 
 class VisionFeatureExtractor:
