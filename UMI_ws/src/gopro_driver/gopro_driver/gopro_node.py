@@ -65,13 +65,21 @@ class GoProNode(Node):
         if self.cap is None:
             return
 
-        ok, frame = self.cap.read()
+        #receive split second frame from camera and stamp
+        ok = self.cap.grab()
+        rx_stamp = self.get_clock().now().to_msg()
+        
         if not ok:
             self.get_logger().warn('Failed to read frame from GoPro.')
             return
 
+        #decode frame after stamping
+        ok, frame = self.cap.retrieve()
+        if not ok:
+            return
+        
         msg = self.bridge.cv2_to_imgmsg(frame, encoding='bgr8')
-        msg.header.stamp = self.get_clock().now().to_msg()
+        msg.header.stamp = rx_stamp
         msg.header.frame_id = self.frame_id
         self.publisher.publish(msg)
 
