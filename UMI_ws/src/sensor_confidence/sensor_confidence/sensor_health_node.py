@@ -180,13 +180,13 @@ class SensorHealthNode(Node):
 
         #handle cases where any of the sensor confidence computations return None
         if vision_result is None:
-            self.get_logger().warn("Waiting for vision data...")
+            self.get_logger().warn("Waiting for vision data...", throttle_duration_sec=5.0)
             return
         if force_result is None:
-            self.get_logger().warn("Waiting for force data...")
+            self.get_logger().warn("Waiting for force data...", throttle_duration_sec=5.0)
             return
         if tactile_result is None:
-            self.get_logger().warn("Waiting for tactile data...")
+            self.get_logger().warn("Waiting for tactile data...", throttle_duration_sec=5.0)
             return
         
         #unpack results from each sensor confidence computation
@@ -227,7 +227,8 @@ class SensorHealthNode(Node):
         )
 
         if force_result is None:
-            self.get_logger().warn("Waiting for sufficient data to fuse...")
+            self.get_logger().warn("Waiting for sufficient data to fuse...",
+                                   throttle_duration_sec=5.0)
             return
         
         force_left_confidence, force_right_confidence, vision_confidence, tactile_left_confidence, tactile_right_confidence = force_result
