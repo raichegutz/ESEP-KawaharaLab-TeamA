@@ -4,8 +4,9 @@ from sensor_confidence.common.task_phase import TaskPhase
 from .models import FusionThresholds
 
 class SensorFusion:
-    def __init__(self):
+    def __init__(self, logger):
         self.thresholds = FusionThresholds()
+        self._logger = logger
 
     def fuse_confidences(self,
         left_force_health,
@@ -22,8 +23,25 @@ class SensorFusion:
         right_tactile_features,
 
         task_phase,
-        ToF_features
+        ToF_features,
     ):
+        missing = []
+        if left_force_health is None:
+            missing.append("left force")
+        if right_force_health is None:
+            missing.append("right force")
+        if vision_health is None:
+            missing.append("vision")
+        if left_tactile_health is None:
+            missing.append("left tactile")
+        if right_tactile_health is None:
+            missing.append("right tactile")
+        if missing:
+            self._logger.warn(
+            "Fusion waiting for: " + ", ".join(missing),
+            throttle_duration_sec=5.0
+        )
+            return None
         
         #initialize adjustments for each sensor type before fusion
         force_left_adj=0.0
