@@ -8,6 +8,7 @@ import rclpy
 from geometry_msgs.msg import WrenchStamped
 from rclpy.node import Node
 from sensor_msgs.msg import Image
+from std_msgs.msg import Bool
 
 from .converters import image_msg_to_metadata, image_msg_to_record
 from .sensor_buffer import SensorDataBuffer
@@ -70,6 +71,13 @@ class ThreeTopicRecorder(Node):
             10,
         )
 
+        #publish to LED node for offline video feed syncronization
+        self.ready_pub = self.create_publisher(
+            Bool,
+            "/recorder_ready",
+            1,
+        )
+
         # Buffered writes avoid doing filesystem I/O for every sensor message.
         self.flush_timer = self.create_timer(1.5, self.flush)
         self.episode_timer = self.create_timer(
@@ -84,6 +92,7 @@ class ThreeTopicRecorder(Node):
 
     def start_episode(self):
         """Create fresh buffers and writers for the next episode."""
+        self.ready_pub.publish(Bool(data=True))
         self.current_episode += 1
         path = self.episode_path(self.current_episode)
         path.mkdir(parents=True, exist_ok=False)
@@ -139,6 +148,7 @@ class ThreeTopicRecorder(Node):
 
     def finish_episode(self):
         """Finalize the active episode and start another when requested."""
+        self.ready_pub.publish(Bool(data=False))
         self.flush()
         path = self.episode_path(self.current_episode)
         info_path = path / "episode_info.json"
