@@ -87,7 +87,7 @@ class SensorHealthNode(Node):
         self.ToF_data_processor = ToFDataProcessor()
 
         #intialize sensor fuser
-        self.sensor_fuser = SensorFusion()
+        self.sensor_fuser = SensorFusion(self.get_logger())
 
       
         #initialize keyboard listener to change task phase
@@ -211,7 +211,7 @@ class SensorHealthNode(Node):
 
         #fuse sensor health parameters to calculate final confidence 
         #perform intersensor cross modality fusion
-        force_left_confidence, force_right_confidence, vision_confidence, tactile_left_confidence, tactile_right_confidence = self.sensor_fuser.fuse_confidences(
+        force_result = self.sensor_fuser.fuse_confidences(
             left_force_health,
             right_force_health,
             left_force_features,
@@ -225,6 +225,12 @@ class SensorHealthNode(Node):
             self.task_phase,
             ToF_features
         )
+
+        if force_result is None:
+            self.get_logger().warn("Waiting for sufficient data to fuse...")
+            return
+        
+        force_left_confidence, force_right_confidence, vision_confidence, tactile_left_confidence, tactile_right_confidence = force_result
 
         #publish confidence values
         self.force_confidence_publisher.publish(Float32(data=force_left_confidence))
