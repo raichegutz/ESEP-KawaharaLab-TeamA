@@ -1,1 +1,2 @@
-chrt -f 70 taskset -c 3 ros2 run led_driver led_driver_node
+taskset -c 3 ros2 run led_driver led_driver
+
