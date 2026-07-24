@@ -3,7 +3,7 @@
 import time
 from gpiozero import LED
 
-GPIO_PIN = 18
+GPIO_PIN = 4
 
 led = LED(GPIO_PIN)
 
