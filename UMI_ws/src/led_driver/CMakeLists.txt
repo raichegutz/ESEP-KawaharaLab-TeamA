@@ -13,11 +13,11 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   DEPENDENCIES builtin_interfaces
 )
 
-ament_python_install_package(${PROJECT_NAME})
 
 install(PROGRAMS
-  led_driver/led_driver.py
+  led_driver/led_driver_node.py
   DESTINATION lib/${PROJECT_NAME}
+  RENAME led_driver
 )
 
 ament_export_dependencies(rosidl_default_runtime)
