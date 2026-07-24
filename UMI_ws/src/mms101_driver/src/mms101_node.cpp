@@ -321,8 +321,9 @@ private:
         return;
     }
     */
-
+    RCLCPP_INFO(this->get_logger(), "Waiting for packet...");
     int n = read(serial_fd_, temp, sizeof(temp));
+    RCLCPP_INFO(this->get_logger(), "Read %d bytes", n);
     rclcpp::Time rx_stamp = this->get_clock()->now();
 
     if (n < 0)
