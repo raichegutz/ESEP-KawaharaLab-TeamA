@@ -9,10 +9,11 @@ from geometry_msgs.msg import WrenchStamped
 from rclpy.node import Node
 from sensor_msgs.msg import Image
 from std_msgs.msg import Bool
+from led_driver.msg import LedPulse
 
 from .converters import image_msg_to_metadata, image_msg_to_record
 from .sensor_buffer import SensorDataBuffer
-from .writer import ForceSensorWriter, GelsightWriter
+from .writer import ForceSensorWriter, GelsightWriter, LedPulseWriter
 
 
 class ThreeTopicRecorder(Node):
@@ -40,8 +41,10 @@ class ThreeTopicRecorder(Node):
 
         self.gelsight_buffer = SensorDataBuffer()
         self.force_buffer = SensorDataBuffer()
+        self.led_buffer = SensorDataBuffer()
         self.gelsight_writer = None
         self.force_writer = None
+        self.led_writer = None
         self.current_episode = 0
         self.recording_complete = False
         self.run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S_%fZ")
@@ -71,6 +74,12 @@ class ThreeTopicRecorder(Node):
             10,
         )
 
+        self.sub_led_pulse = self.create_subscription(
+            LedPulse,
+            "/led_pulse",
+            lambda msg: self.led_callback(msg, "led_pulse"),
+            10,
+        )
         #publish to LED node for offline video feed syncronization
         self.ready_pub = self.create_publisher(
             Bool,
@@ -99,8 +108,10 @@ class ThreeTopicRecorder(Node):
 
         self.gelsight_buffer = SensorDataBuffer()
         self.force_buffer = SensorDataBuffer()
+        self.led_buffer = SensorDataBuffer()
         self.gelsight_writer = GelsightWriter(path)
         self.force_writer = ForceSensorWriter(path)
+        self.led_writer = LedPulseWriter(path)
 
         started_at = datetime.now(timezone.utc).isoformat()
         episode_info = {
@@ -139,12 +150,29 @@ class ThreeTopicRecorder(Node):
         }
         self.force_buffer.append(topic_name, record)
 
+    def led_callback(self, msg, topic_name):
+        if self.recording_complete:
+            return
+        record = {
+            "start_stamp": (
+                msg.start_stamp.sec * 1_000_000_000
+                + msg.start_stamp.nanosec
+            ),
+            "end_stamp": (
+                msg.end_stamp.sec * 1_000_000_000
+                + msg.end_stamp.nanosec
+            ),
+            "pulse_id": msg.pulse_id,
+        }
+        self.led_buffer.append(topic_name, record)
+    
     def flush(self):
         """Write all currently buffered messages to the active episode."""
-        if self.gelsight_writer is None or self.force_writer is None:
+        if self.gelsight_writer is None or self.force_writer is None or self.led_writer is None:
             return
         self.gelsight_buffer.pop_all(self.gelsight_writer)
         self.force_buffer.pop_all(self.force_writer)
+        self.led_buffer.pop_all(self.led_writer)
 
     def finish_episode(self):
         """Finalize the active episode and start another when requested."""

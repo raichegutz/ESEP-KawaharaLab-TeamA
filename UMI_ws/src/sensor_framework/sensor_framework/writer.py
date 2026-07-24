@@ -167,3 +167,36 @@ class ForceSensorWriter(Writer):
         for key in required_keys:
             if key not in record:
                 raise ValueError(f'missing key in force record: {key}')
+
+class LedPulseWriter(Writer):
+    def __init__(self, data_path: Path):
+        self.data_path = Path(data_path)
+        self.data_path.mkdir(parents=True, exist_ok=True)
+
+    def write(self, records: dict[str, list]) -> None:
+        if not records:
+            return
+
+        for led_name, led_records in records.items():
+            safe_name = self._safe_led_name(led_name)
+            led_path = self.data_path / f'recording_led_{safe_name}.jsonl'
+            with led_path.open('a', encoding='utf-8') as recording:
+                for record in led_records:
+                    self._validate(record)
+                    recording.write(json.dumps(record) + '\n')
+
+    @staticmethod
+    def _safe_led_name(led_name):
+        safe_name = ''.join(
+            character if character.isalnum() or character in '-_' else '_'
+            for character in led_name
+        ).strip('_')
+        if not safe_name:
+            raise ValueError(f'invalid LED name: {led_name!r}')
+        return safe_name
+
+    def _validate(self, record: dict):
+        required_keys = ['start_stamp', 'end_stamp', 'pulse_id']
+        for key in required_keys:
+            if key not in record:
+                raise ValueError(f'missing key in LED record: {key}')
