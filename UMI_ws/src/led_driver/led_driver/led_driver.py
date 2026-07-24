@@ -14,7 +14,7 @@ class LEDDriver(Node):
 
     def __init__(self):
         super().__init__("led_driver")
-        self.declare_parameter("gpio_pin", 18)
+        self.declare_parameter("gpio_pin", 4)
         self.led = LED(self.get_parameter("gpio_pin").value)
 
 
@@ -83,6 +83,7 @@ class LEDDriver(Node):
 
         self.led.off()
         self.get_logger().info("LED pulse thread stopped.")
+<<<<<<< HEAD
 
 def main(args=None):
     rclpy.init(args=args)
@@ -98,3 +99,5 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
+=======
+>>>>>>> dc36666 ( Changes to be committed:)
