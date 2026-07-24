@@ -24,6 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
+             'led_driver = led_driver.led_driver:main',
         ],
     },
 )

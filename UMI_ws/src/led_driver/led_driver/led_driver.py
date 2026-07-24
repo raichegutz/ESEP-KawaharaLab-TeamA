@@ -83,3 +83,18 @@ class LEDDriver(Node):
 
         self.led.off()
         self.get_logger().info("LED pulse thread stopped.")
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = LEDDriver()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()
