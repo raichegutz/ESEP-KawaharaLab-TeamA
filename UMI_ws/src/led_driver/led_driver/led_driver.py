@@ -17,7 +17,7 @@ class LEDDriver(Node):
         self.declare_parameter("gpio_pin", 4)
         self.led = LED(self.get_parameter("gpio_pin").value)
 
-
+'''
         self.ready_sub = self.create_subscription(
             Bool,
             "/recorder_ready",
@@ -30,12 +30,12 @@ class LEDDriver(Node):
             "/led_pulse",
             10,
         )
-
-        self.recording = False
+'''
+        self.recording = True
         self.thread = None
         self.pulse_id = 0
 
-
+'''
     def ready_callback(self, msg):
         if msg.data and not self.recording:
             self.recording = True
@@ -50,7 +50,7 @@ class LEDDriver(Node):
                 self.thread.join(timeout=1.0)
                 self.thread = None
 
-
+'''
     def flash_loop(self):
         period = 0.1      # 10 Hz
         pulse_width = 0.015   # 15 ms
@@ -65,7 +65,7 @@ class LEDDriver(Node):
 
             self.led.off()
             end_stamp = self.get_clock().now()
-      
+
             msg = LedPulse()
 
             msg.start_stamp = start_stamp.to_msg()
@@ -83,7 +83,7 @@ class LEDDriver(Node):
 
         self.led.off()
         self.get_logger().info("LED pulse thread stopped.")
-<<<<<<< HEAD
+
 
 def main(args=None):
     rclpy.init(args=args)
@@ -99,5 +99,4 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-=======
->>>>>>> dc36666 ( Changes to be committed:)
+
