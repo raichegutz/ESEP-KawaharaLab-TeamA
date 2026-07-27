@@ -14,15 +14,20 @@ from .logger import log_message
 from .image_processing import crop_and_resize
 
 
-class Camera:
-    def __init__(self, device):
+class Camera: ################FIX LATER IF IT DOESNT WORK
+    def __init__(self, device, width=None, height=None):
         """
         Initialize the Camera instance.
 
         Args:
             device: A numeric index (for Windows/macOS) or device path (for Linux).
+            width: The desired width of the camera feed.
+            height: The desired height of the camera feed.
         """
         self.device = device
+        #######################################
+        self.width = width
+        self.height = height
         self.cap = None
 
     def open(self) -> None:
@@ -38,7 +43,31 @@ class Camera:
         for backend in backends:
             cap = cv2.VideoCapture(self.device, backend)
             if cap.isOpened():
+                ###########################################
+                 # Set format first
+                cap.set(
+                    cv2.CAP_PROP_FOURCC,
+                    cv2.VideoWriter_fourcc(*"MJPG")
+                )
+
+                if self.width and self.height:
+                    cap.set(
+                        cv2.CAP_PROP_FRAME_WIDTH,
+                        self.width
+                    )
+                    cap.set(
+                        cv2.CAP_PROP_FRAME_HEIGHT,
+                        self.height
+                    )
+
                 self.cap = cap
+
+                print(
+                    "Camera mode:",
+                    self.cap.get(cv2.CAP_PROP_FRAME_WIDTH),
+                    self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+                )
+
                 return
             try:
                 cap.release()
@@ -203,11 +232,13 @@ class GelSightMini:
             self.camera.release()
 
         def try_open(device_value):
-            cam = Camera(device=device_value)
+            cam = Camera(device=device_value, width=self.target_width, height=self.target_height)
             cam.open()
+            '''
             # Set the camera resolution to target width and height.
             cam.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.target_width)
             cam.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.target_height)
+            '''
             current_width = cam.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
             current_height = cam.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
             log_message(
@@ -309,14 +340,17 @@ class GelSightMini:
         self.fps = 1.0 / dt if dt > 0 else 0
         self.time_prev = time_now
 
-        self.current_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-        self.frame_count += 1
+        ###########################RESIZE BEFORE CONVERT
         self.current_frame = crop_and_resize(
-            image=self.current_frame,
+            image=self.frame,
             target_size=(self.target_width, self.target_height),
             border_fraction=self.border_fraction,
         )
+
+        self.current_frame = cv2.cvtColor(self.current_frame, cv2.COLOR_BGR2RGB)
+
+        self.frame_count += 1
+        
 
         if self.recording and self.video_writer is not None:
             # Convert color back to BGR

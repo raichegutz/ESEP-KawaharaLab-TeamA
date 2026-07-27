@@ -48,12 +48,12 @@ class SynchronizedPublisher(Node):
         self.gelsight_left_sync = self.create_publisher(
             Image,
              "/gelsight/left/image_raw/sync",
-            10
+            1
         )
         self.gelsight_right_sync = self.create_publisher(
             Image,
             "/gelsight/right/image_raw/sync",
-            10
+            1
         )
 
         self.force_left_sync = self.create_publisher(
