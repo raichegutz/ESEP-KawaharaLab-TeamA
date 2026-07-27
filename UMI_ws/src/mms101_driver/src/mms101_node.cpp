@@ -107,8 +107,8 @@ private:
     tty.c_cc[VMIN]  = 0; // read doesn't block
     tty.c_cc[VTIME] = 1; // 0.1 seconds read timeout
     */
-    tty.c_cc[VMIN]  = 25; // read doesn't block
-    tty.c_cc[VTIME] = 0; // 0.1 seconds read timeout
+    tty.c_cc[VMIN]  = 0; // read doesn't block
+    tty.c_cc[VTIME] = 1; // 0.1 seconds read timeout
 
     tty.c_iflag &= ~(IXON | IXOFF | IXANY); // shut off xon/xoff ctrl
     tty.c_cflag |= (CLOCAL | CREAD); // ignore modem controls, enable reading
@@ -321,9 +321,9 @@ private:
         return;
     }
     */
-    RCLCPP_INFO(this->get_logger(), "Waiting for packet...");
+    
     int n = read(serial_fd_, temp, sizeof(temp));
-    RCLCPP_INFO(this->get_logger(), "Read %d bytes", n);
+    
     rclcpp::Time rx_stamp = this->get_clock()->now();
 
     if (n < 0)
