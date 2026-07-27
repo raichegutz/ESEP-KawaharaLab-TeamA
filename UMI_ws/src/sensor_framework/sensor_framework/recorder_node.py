@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import rclpy
+from rclpy.qos import QoSProfile, DurabilityPolicy, ReliabilityPolicy
 from geometry_msgs.msg import WrenchStamped
 from rclpy.node import Node
 from sensor_msgs.msg import Image
@@ -81,11 +82,17 @@ class ThreeTopicRecorder(Node):
             10,
         )
         #publish to LED node for offline video feed syncronization
+        ready_qos = QoSProfile(
+            depth=1,
+            reliability=ReliabilityPolicy.RELIABLE,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+        )
         self.ready_pub = self.create_publisher(
             Bool,
             "/recorder_ready",
-            1,
+            ready_qos,
         )
+        
 
         # Buffered writes avoid doing filesystem I/O for every sensor message.
         self.flush_timer = self.create_timer(1.5, self.flush)
