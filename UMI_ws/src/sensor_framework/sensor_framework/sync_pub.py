@@ -1,4 +1,6 @@
 import rclpy
+from collections import deque
+
 from geometry_msgs.msg import WrenchStamped
 from rclpy.node import Node
 from sensor_msgs.msg import Image
@@ -26,23 +28,28 @@ class SynchronizedPublisher(Node):
             "/gelsight/right/image_raw",
         )
 
-        self.sub_force_left = Subscriber(
-            self,
-            WrenchStamped,
-            "/force_torque/left",
-        )
-        self.sub_force_right = Subscriber(
-            self,
-            WrenchStamped,
-            "/force_torque/right",
-        )
-
         self.sub_gopro = Subscriber(
             self,
             Image,
             "/gopro/image_raw",
         )
- 
+
+        self.force_left_buffer = deque(maxlen=200)
+        self.force_right_buffer = deque(maxlen=200)
+
+        self.force_left_sub = self.create_subscription(
+            WrenchStamped,
+            "/force_torque/left",
+            self.force_left_callback,
+            10
+        )
+
+        self.force_right_sub = self.create_subscription(
+            WrenchStamped,
+            "/force_torque/right",
+            self.force_right_callback,
+            10
+        )
 
         #create synchronized publishers
         self.gelsight_left_sync = self.create_publisher(
@@ -62,49 +69,63 @@ class SynchronizedPublisher(Node):
             10
         )
 
-
-        self.force_left_latest = None
-        self.force_right_latest = None
-
-        self.force_left_sub = self.create_subscription(
+        self.force_left_sync = self.create_publisher(
             WrenchStamped,
-            "/force_torque/left",
-            self.force_left_callback,
+            "/force_torque/left/sync",
             10
         )
 
-        self.force_right_sub = self.create_subscription(
+        self.force_right_sync = self.create_publisher(
             WrenchStamped,
-            "/force_torque/right",
-            self.force_right_callback,
+            "/force_torque/right/sync",
             10
         )
 
         #initalize time synchronizer
         queue_size = 50
         max_delay = 0.075
-        self.time_sync = ApproximateTimeSynchronizer([self.sub_image_left, self.sub_image_right, self.sub_force_left, self.sub_force_right, self.sub_gopro],
+        self.time_sync = ApproximateTimeSynchronizer([self.sub_image_left, self.sub_image_right, self.sub_gopro],
                                                      queue_size, max_delay)
         self.time_sync.registerCallback(self.sync_callback)
 
     def force_left_callback(self, msg):
-        self.force_left_latest = msg
+        self.force_left_buffer.append(msg)
 
 
     def force_right_callback(self, msg):
-        self.force_right_latest = msg
+        self.force_right_buffer.append(msg)
 
+    def get_stamp(self, msg):
+        return (
+            msg.header.stamp.sec +
+            msg.header.stamp.nanosec * 1e-9
+        )
+    
+    def get_closest_force(self, buffer, timestamp):
+        if len(buffer) == 0:
+            return None
+
+        return min(
+            buffer,
+            key=lambda msg: abs(
+                self.get_stamp(msg) - timestamp
+            )
+        )
+    
     def sync_callback(self, image_left, image_right, gopro):
         # publish synchronized messages
-        if self.force_left_latest is None:
+        if not self.force_left_buffer:
             return
 
-        if self.force_right_latest is None:
+        if not self.force_right_buffer:
             return
 
-        force_left = self.force_left_latest
-        force_right = self.force_right_latest
+        force_left = self.get_closest_force(self.force_left_buffer, self.get_stamp(image_left))
+        force_right = self.get_closest_force(self.force_right_buffer, self.get_stamp(image_right))
 
+        if force_left is None or force_right is None:
+            return
+        
         times = [
             image_left.header.stamp.sec + image_left.header.stamp.nanosec * 1e-9,
             image_right.header.stamp.sec + image_right.header.stamp.nanosec * 1e-9,
