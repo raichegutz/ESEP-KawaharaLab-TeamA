@@ -87,3 +87,16 @@ class SynchronizedPublisher(Node):
         self.force_left_sync.publish(force_left)
         self.force_right_sync.publish(force_right)
         self.gopro_sync.publish(gopro)
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = SynchronizedPublisher()
+    try:
+        rclpy.spin(node)
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+if __name__ == "__main__":
+    main()
