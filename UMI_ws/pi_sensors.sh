@@ -1,6 +1,6 @@
 #!/bin/bash
 source /opt/ros/jazzy/setup.bash
-source ~/sensor_ws/install/setup.bash
+source ~/UMI_ws/install/setup.bash
 
 echo "=== Preparing Real-Time Environment ==="
 
