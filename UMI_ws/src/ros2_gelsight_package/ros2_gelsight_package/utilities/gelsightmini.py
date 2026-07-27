@@ -342,7 +342,7 @@ class GelSightMini:
 
         ###########################RESIZE BEFORE CONVERT
         self.current_frame = crop_and_resize(
-            image=self.frame,
+            image=frame,
             target_size=(self.target_width, self.target_height),
             border_fraction=self.border_fraction,
         )
