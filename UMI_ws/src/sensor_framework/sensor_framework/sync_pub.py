@@ -56,32 +56,55 @@ class SynchronizedPublisher(Node):
             1
         )
 
-        self.force_left_sync = self.create_publisher(
-            WrenchStamped,
-            "/force_torque/left/sync",
-            10
-        )
-        self.force_right_sync = self.create_publisher(
-            WrenchStamped,
-            "/force_torque/right/sync",
-            10
-        )
-
         self.gopro_sync = self.create_publisher(
             Image,
             "/gopro/image_raw/sync",
             10
         )
 
+
+        self.force_left_latest = None
+        self.force_right_latest = None
+
+        self.force_left_sub = self.create_subscription(
+            WrenchStamped,
+            "/force_torque/left",
+            self.force_left_callback,
+            10
+        )
+
+        self.force_right_sub = self.create_subscription(
+            WrenchStamped,
+            "/force_torque/right",
+            self.force_right_callback,
+            10
+        )
+
         #initalize time synchronizer
         queue_size = 50
-        max_delay = 0.025
+        max_delay = 0.075
         self.time_sync = ApproximateTimeSynchronizer([self.sub_image_left, self.sub_image_right, self.sub_force_left, self.sub_force_right, self.sub_gopro],
                                                      queue_size, max_delay)
         self.time_sync.registerCallback(self.sync_callback)
 
-    def sync_callback(self, image_left, image_right, force_left, force_right, gopro):
+    def force_left_callback(self, msg):
+        self.force_left_latest = msg
+
+
+    def force_right_callback(self, msg):
+        self.force_right_latest = msg
+
+    def sync_callback(self, image_left, image_right, gopro):
         # publish synchronized messages
+        if self.force_left_latest is None:
+            return
+
+        if self.force_right_latest is None:
+            return
+
+        force_left = self.force_left_latest
+        force_right = self.force_right_latest
+
         times = [
             image_left.header.stamp.sec + image_left.header.stamp.nanosec * 1e-9,
             image_right.header.stamp.sec + image_right.header.stamp.nanosec * 1e-9,
@@ -91,6 +114,22 @@ class SynchronizedPublisher(Node):
         ]
         spread = max(times) - min(times)
         self.get_logger().info(f"Timestamp spread: {spread*1000:.2f} ms")
+        image_time = (
+            image_left.header.stamp.sec +
+            image_left.header.stamp.nanosec * 1e-9
+        )
+
+        force_time = (
+            force_left.header.stamp.sec +
+            force_left.header.stamp.nanosec * 1e-9
+        )
+
+        dt = abs(image_time - force_time)
+
+        self.get_logger().info(
+            f"Image-Force delay: {dt*1000:.2f} ms"
+        )
+       
         self.gelsight_left_sync.publish(image_left)
         self.gelsight_right_sync.publish(image_right)
         self.force_left_sync.publish(force_left)
