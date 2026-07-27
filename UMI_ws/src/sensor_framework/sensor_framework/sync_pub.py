@@ -81,17 +81,17 @@ class SynchronizedPublisher(Node):
         self.time_sync.registerCallback(self.sync_callback)
 
     def sync_callback(self, image_left, image_right, force_left, force_right, gopro):
-        #publish synchronized messages
-	times = [
-		image_left.header.stamp.sec + image_left.header.stamp.nanosec * 1e-9,
-		image_right.header.stamp.sec + image_right.header.stamp.nanosec * 1e-9,
-		force_left.header.stamp.sec + force_left.header.stamp.nanosec * 1e-9,
-		force_right.header.stamp.sec + force_right.header.stamp.nanosec * 1e-9,
-		gopro.header.stamp.sec + gopro.header.stamp.nanosec * 1e-9,
-	]
-	spread = max(times) - min(times)
+        # publish synchronized messages
+        times = [
+            image_left.header.stamp.sec + image_left.header.stamp.nanosec * 1e-9,
+            image_right.header.stamp.sec + image_right.header.stamp.nanosec * 1e-9,
+            force_left.header.stamp.sec + force_left.header.stamp.nanosec * 1e-9,
+            force_right.header.stamp.sec + force_right.header.stamp.nanosec * 1e-9,
+            gopro.header.stamp.sec + gopro.header.stamp.nanosec * 1e-9,
+        ]
+        spread = max(times) - min(times)
         self.get_logger().info(f"Timestamp spread: {spread*1000:.2f} ms")
-	self.gelsight_left_sync.publish(image_left)
+        self.gelsight_left_sync.publish(image_left)
         self.gelsight_right_sync.publish(image_right)
         self.force_left_sync.publish(force_left)
         self.force_right_sync.publish(force_right)
