@@ -1,6 +1,6 @@
 #!/bin/bash
 source /opt/ros/jazzy/setup.bash
-source ~/UMI_ws/install/setup.bash
+source ~/ESEP-KawaharaLab-TeamA/UMI_ws/install/setup.bash
 
 ros2 run gopro_driver gopro_node --ros-args -p video_device:=/dev/video24 &
 ros2 run sensor_framework synchronized_publisher

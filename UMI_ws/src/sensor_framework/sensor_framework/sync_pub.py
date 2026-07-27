@@ -74,8 +74,8 @@ class SynchronizedPublisher(Node):
         )
 
         #initalize time synchronizer
-        queue_size = 10
-        max_delay = 0.005
+        queue_size = 50
+        max_delay = 0.015
         self.time_sync = ApproximateTimeSynchronizer([self.sub_image_left, self.sub_image_right, self.sub_force_left, self.sub_force_right, self.sub_gopro],
                                                      queue_size, max_delay)
         self.time_sync.registerCallback(self.sync_callback)
