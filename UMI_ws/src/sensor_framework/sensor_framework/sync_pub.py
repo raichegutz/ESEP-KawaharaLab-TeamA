@@ -75,14 +75,23 @@ class SynchronizedPublisher(Node):
 
         #initalize time synchronizer
         queue_size = 50
-        max_delay = 0.015
+        max_delay = 0.025
         self.time_sync = ApproximateTimeSynchronizer([self.sub_image_left, self.sub_image_right, self.sub_force_left, self.sub_force_right, self.sub_gopro],
                                                      queue_size, max_delay)
         self.time_sync.registerCallback(self.sync_callback)
 
     def sync_callback(self, image_left, image_right, force_left, force_right, gopro):
         #publish synchronized messages
-        self.gelsight_left_sync.publish(image_left)
+	times = [
+		image_left.header.stamp.sec + image_left.header.stamp.nanosec * 1e-9,
+		image_right.header.stamp.sec + image_right.header.stamp.nanosec * 1e-9,
+		force_left.header.stamp.sec + force_left.header.stamp.nanosec * 1e-9,
+		force_right.header.stamp.sec + force_right.header.stamp.nanosec * 1e-9,
+		gopro.header.stamp.sec + gopro.header.stamp.nanosec * 1e-9,
+	]
+	spread = max(times) - min(times)
+        self.get_logger().info(f"Timestamp spread: {spread*1000:.2f} ms")
+	self.gelsight_left_sync.publish(image_left)
         self.gelsight_right_sync.publish(image_right)
         self.force_left_sync.publish(force_left)
         self.force_right_sync.publish(force_right)
