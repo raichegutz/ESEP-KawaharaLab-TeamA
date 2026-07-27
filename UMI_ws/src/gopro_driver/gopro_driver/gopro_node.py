@@ -27,7 +27,7 @@ class GoProNode(Node):
         self.publisher = self.create_publisher(Image, '/gopro/image_raw', 10)
 
         self.cap = cv2.VideoCapture(self.video_device, cv2.CAP_V4L2)
-<<<<<<< HEAD
+
         '''
         if self.pixel_format:
             if len(self.pixel_format) != 4:
@@ -37,15 +37,7 @@ class GoProNode(Node):
             fourcc = cv2.VideoWriter_fourcc(*self.pixel_format[:4])
             self.cap.set(cv2.CAP_PROP_FOURCC, fourcc)
         '''
-=======
-#        if self.pixel_format:
-#            if len(self.pixel_format) != 4:
-#                self.get_logger().warn(
-#                    f'Expected a 4-character pixel_format, got {self.pixel_format!r}.'
-#                )
-#            fourcc = cv2.VideoWriter_fourcc(*self.pixel_format[:4])
-#            self.cap.set(cv2.CAP_PROP_FOURCC, fourcc)
->>>>>>> 534d2ff (	modified:   src/gopro_driver/gopro_driver/gopro_node.py)
+
         self.cap.set(cv2.CAP_PROP_CONVERT_RGB, 1)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
